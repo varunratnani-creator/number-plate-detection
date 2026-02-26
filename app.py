@@ -1,8 +1,22 @@
-import cv2
+from ultralytics import YOLO
+import streamlit as st
+from PIL import Image
+import numpy as np
 
-img_array = np.array(img)
+st.title("🚗 Number Plate Detection App")
 
-# Resize image
-img_resized = cv2.resize(img_array, (640, 640))
+model = YOLO("best.pt")
 
-results = model.predict(img_resized, conf=0.25)
+uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image")
+
+    img_array = np.array(image)
+
+    results = model.predict(img_array, imgsz=640, conf=0.25)
+
+    result_img = results[0].plot()
+
+    st.image(result_img, caption="Detected Image")
