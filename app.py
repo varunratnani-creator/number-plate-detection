@@ -1,26 +1,32 @@
+import torch
+torch.set_num_threads(1)
+
 from ultralytics import YOLO
 import streamlit as st
 from PIL import Image
 import numpy as np
-import os
 
-# Prevent OpenCV from using GUI backend
-os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
+st.set_page_config(page_title="Number Plate Detection", layout="centered")
 
 st.title("🚗 Number Plate Detection App")
 
-model = YOLO("best.pt")
+@st.cache_resource
+def load_model():
+    return YOLO("best.pt")
 
-uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+model = load_model()
 
-if uploaded_file:
-    image = Image.open(uploaded_file)
+uploaded_file = st.file_uploader("Upload a car image", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
     img_array = np.array(image)
 
-    results = model(img_array)
+    with st.spinner("Detecting number plate..."):
+        results = model(img_array, imgsz=320)
 
     result_img = results[0].plot()
 
-    st.image(result_img, caption="Detected Image", use_column_width=True)
+    st.image(result_img, caption="Detection Result", use_column_width=True)
